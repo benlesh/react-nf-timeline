@@ -1,9 +1,9 @@
 import React from 'react';
 import { Router, Route, IndexRoute } from 'react-router';
 import { createHistory } from 'history';
-import Application from './components/routes/application';
-import Index from './components/routes/index';
-import About from './components/routes/about';
+import Application from './routes/application';
+import Index from './routes/index';
+import About from './routes/about';
 
 export default (
   <Router history={createHistory()}>

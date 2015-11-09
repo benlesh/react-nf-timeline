@@ -44,7 +44,7 @@
   "dependencies": {
     "core-decorators": "^0.4.1",
     "history": "^1.9.1",
-    "react": "^0.13.3",
+    "react": "^0.14.2",
     "jayphelps-react-router": "1.0.0-canary"
   },
   "engines": {

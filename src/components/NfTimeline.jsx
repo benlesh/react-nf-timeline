@@ -34,11 +34,8 @@ export default class NfTimeline extends Component {
     viewport.addEventListener('scroll', viewportScrolled);
   }
 
-  startIndex(flattenedChildren) {
-    const { viewportHeight, viewportOffset } = this.state;
-    const { eventHeight } = this.props;
-    const diff = viewportHeight - viewportOffset;
-    return Math.max(0, flattenedChildren.length - Math.floor((flattenedChildren.length * diff) / (flattenedChildren.length * eventHeight)) - 1) || 0;
+  get startPoint() {
+    return Math.max(Math.floor(this.state.viewportOffset / this.props.eventHeight) - 1, 0);
   }
 
   get displayCount() {
@@ -50,56 +47,85 @@ export default class NfTimeline extends Component {
     viewport.removeEventListener('scroll', this.viewportScrolled);
   }
 
-  flattenChildren() {
-    if (!this._lastChildren || this._lastChildren !== this.props.children) {
-      this._lastChildren = this.props.children;
-      this._flattened = null;
-    }
+  crawlExpandedChildren(action) {
+    let index = 0;
 
-    if (!this._flattened) {
-      const { children, eventHeight } = this.props;
-      let key = 0;
+    const crawl = (children, level, _rootParent) => {
+      const arr = React.Children.toArray(children);
+      for (let i = 0, len = arr.length; i < len; i++) {
+        const child = arr[i];
+        // if the node is collapsed, don't count it
+        // and don't crawl the branch
+        if (child.props.collapse) {
+          continue;
+        }
 
-      function flatten(children, level, flat) {
-        const arr = React.Children.toArray(children);
-        arr.forEach(child => {
-          flat.push(React.cloneElement(child, {
-            level: level,
-            height: eventHeight
-          }));
-          flatten(child.props.children, level + 1, flat);
-        });
-        return flat;
+
+        index++;
+
+        let e = {
+          child,
+          index,
+          level,
+          rootParent: _rootParent || child
+        };
+
+        action(e);
+
+        crawl(child.props.children, level + 1, _rootParent || child);
       }
+    };
 
-      this._flattened = flatten(children, 0, []);
-    }
+    crawl(this.props.children, 0, null);
+  }
 
-    return this._flattened;
+  processChildren() {
+    const { startPoint, displayCount,
+      props: { eventHeight },
+      state: { viewportOffset = 0 } } = this;
+    const rootParents = [];
+    let total = 0;
+
+    this.crawlExpandedChildren(e => {
+      total++;
+      const { index, rootParent, level } = e;
+
+      if (startPoint - 1 <= index && index <= startPoint + displayCount + 1) {
+        if (rootParents.indexOf(rootParent) === -1) {
+          rootParents.push(rootParent);
+        }
+      }
+    });
+
+    const events = rootParents.map((element, i) => React.cloneElement(element, { key: i }));
+    return { events, total };
   }
 
   render() {
     const { eventHeight } = this.props;
     const { viewportOffset } = this.state;
-    const flattenedChildren = this.flattenChildren();
-    const startIndex = this.startIndex(flattenedChildren);
-    const displayCount = this.displayCount;
-    const events = flattenedChildren.slice(startIndex, startIndex + displayCount)
-      .map((event, i) => React.cloneElement(event, { key: i, viewportOffset }));
+    const { displayCount, startPoint } = this;
+    const { events, total } = this.processChildren();
 
     const viewportStyle = {
-      'height': this.props.height + 'px',
-      'overflow-y': 'scroll'
+      height: this.props.height + 'px',
+      overflowY: 'scroll'
     };
 
     const contentStyle = {
-      'height': (eventHeight * flattenedChildren.length) + 'px'
+      'height': (eventHeight * total) + 'px'
+    };
+
+    const offsetStyle = {
+      transform: `translate3d(0, ${viewportOffset}px, 0)`
     };
 
     return (<div className="nf-timeline">
       <div ref="viewport" className="nf-timeline-viewport" style={viewportStyle}>
         <div className="nf-timeline-content" style={contentStyle}>
-          {events}
+          <div className="nf-timeline-inner-offset" style={offsetStyle}>
+            {events}
+          </div>
         </div>
       </div>
     </div>);

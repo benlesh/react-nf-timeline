@@ -11,15 +11,15 @@ export default
 class IndexPage extends Component {
   getEvents() {
     const events = [];
-    for (let i = 0; i < 1000; i++) {
-      events.push(<NfTimelineEvent>
-          <NfTimelineEvent>
-            <NfTimelineEvent/>
-            <NfTimelineEvent/>
-            <NfTimelineEvent/>
+    for (let i = 0; i < 1500; i++) {
+      events.push(<NfTimelineEvent value={i}>
+          <NfTimelineEvent value={i + '-' + 0}>
+            <NfTimelineEvent value={i + '-' + 0 + '-' + 0}/>
+            <NfTimelineEvent value={i + '-' + 0 + '-' + 1}/>
+            <NfTimelineEvent value={i + '-' + 0 + '-' + 2}/>
           </NfTimelineEvent>
-          <NfTimelineEvent/>
-          <NfTimelineEvent/>
+          <NfTimelineEvent value={i + '-' + 1}/>
+          <NfTimelineEvent value={i + '-' + 2}/>
         </NfTimelineEvent>);
     }
 

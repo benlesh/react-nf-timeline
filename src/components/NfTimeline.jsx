@@ -34,7 +34,7 @@ export default class NfTimeline extends Component {
     viewport.addEventListener('scroll', viewportScrolled);
   }
 
-  get startPoint() {
+  get startIndex() {
     return Math.max(Math.floor(this.state.viewportOffset / this.props.eventHeight) - 1, 0);
   }
 
@@ -47,78 +47,88 @@ export default class NfTimeline extends Component {
     viewport.removeEventListener('scroll', this.viewportScrolled);
   }
 
-  crawlExpandedChildren(action) {
-    let index = 0;
+  get treeState() {
+    const children = this.props.children;
 
-    const crawl = (children, level, _rootParent) => {
-      const arr = React.Children.toArray(children);
-      for (let i = 0, len = arr.length; i < len; i++) {
-        const child = arr[i];
-        // if the node is collapsed, don't count it
-        // and don't crawl the branch
-        if (child.props.collapse) {
-          continue;
+    if (!this._treeState || children !== this.lastChildren) {
+      this.lastChildren = children;
+      const crawl = function crawl(children, treeState, parent) {
+        const arr = React.Children.toArray(children);
+        const len = arr.length;
+        for (let i = 0; i < len; i++) {
+          let child = arr[i];
+          let node = {};
+
+          node.isCollapsed = child.props.collapse;
+          node.children = [];
+          node.id = child.props.id;
+          node.parent = parent;
+          node.element = child;
+
+          treeState.push(node);
+
+          if (parent) {
+            parent.children.push(node);
+          }
+
+          crawl(child.props.children, treeState, node);
         }
+      };
 
+      const treeState = [];
 
-        index++;
+      crawl(children, treeState, null);
 
-        let e = {
-          child,
-          index,
-          level,
-          rootParent: _rootParent || child
-        };
+      this._treeState = treeState;
+    }
 
-        action(e);
-
-        crawl(child.props.children, level + 1, _rootParent || child);
-      }
-    };
-
-    crawl(this.props.children, 0, null);
+    return this._treeState;
   }
 
   processChildren() {
-    const { startPoint, displayCount,
-      props: { eventHeight },
-      state: { viewportOffset = 0 } } = this;
-    const rootParents = [];
-    let total = 0;
+    const { treeState, displayCount, startIndex } = this;
+    const total = treeState.length;
+    const endIndex = startIndex + displayCount;
+    const events = [];
 
-    this.crawlExpandedChildren(e => {
-      total++;
-      const { index, rootParent, level } = e;
-
-      if (startPoint - 1 <= index && index <= startPoint + displayCount + 1) {
-        if (rootParents.indexOf(rootParent) === -1) {
-          rootParents.push(rootParent);
-        }
+    for (let i = 0; i < total; i++) {
+      let node = treeState[i];
+      if (startIndex <= i && i <= endIndex) {
+        events.push((<div key={events.length}>Event {node.id}</div>));
       }
-    });
+    }
 
-    const events = rootParents.map((element, i) => React.cloneElement(element, { key: i }));
     return { events, total };
   }
 
-  render() {
-    const { eventHeight } = this.props;
-    const { viewportOffset } = this.state;
-    const { displayCount, startPoint } = this;
-    const { events, total } = this.processChildren();
-
-    const viewportStyle = {
+  viewportStyle() {
+    return {
       height: this.props.height + 'px',
       overflowY: 'scroll'
     };
+  }
 
-    const contentStyle = {
-      'height': (eventHeight * total) + 'px'
+  contentStyle(total) {
+    return {
+      height: (this.props.eventHeight * total) + 'px'
     };
+  }
 
-    const offsetStyle = {
-      transform: `translate3d(0, ${viewportOffset}px, 0)`
+  offsetStyle() {
+    const { startIndex, props: { eventHeight } } = this;
+    const offset = startIndex * eventHeight;
+    return {
+      transform: `translate3d(0, ${offset}px, 0)`
     };
+  }
+
+  render() {
+    const { viewportOffset } = this.state;
+    const { displayCount, startIndex } = this;
+    const { events, total } = this.processChildren();
+    const viewportStyle = this.viewportStyle();
+    const contentStyle = this.contentStyle(total);
+    const offsetStyle = this.offsetStyle();
 
     return (<div className="nf-timeline">
       <div ref="viewport" className="nf-timeline-viewport" style={viewportStyle}>

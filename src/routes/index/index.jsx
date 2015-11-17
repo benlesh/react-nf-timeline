@@ -12,14 +12,14 @@ class IndexPage extends Component {
   getEvents() {
     const events = [];
     for (let i = 0; i < 1500; i++) {
-      events.push(<NfTimelineEvent value={i}>
-          <NfTimelineEvent value={i + '-' + 0}>
-            <NfTimelineEvent value={i + '-' + 0 + '-' + 0}/>
-            <NfTimelineEvent value={i + '-' + 0 + '-' + 1}/>
-            <NfTimelineEvent value={i + '-' + 0 + '-' + 2}/>
+      events.push(<NfTimelineEvent id={i}>
+          <NfTimelineEvent id={i + '-' + 0}>
+            <NfTimelineEvent id={i + '-' + 0 + '-' + 0}/>
+            <NfTimelineEvent id={i + '-' + 0 + '-' + 1}/>
+            <NfTimelineEvent id={i + '-' + 0 + '-' + 2}/>
           </NfTimelineEvent>
-          <NfTimelineEvent value={i + '-' + 1}/>
-          <NfTimelineEvent value={i + '-' + 2}/>
+          <NfTimelineEvent id={i + '-' + 1}/>
+          <NfTimelineEvent id={i + '-' + 2}/>
         </NfTimelineEvent>);
     }
 

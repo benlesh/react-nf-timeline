@@ -38,15 +38,6 @@ export default class NfTimelineEvent extends Component {
   }
 
   render() {
-    const { eventHeight, level } = this.props;
-    const style = {
-      marginLeft: '10px',
-    };
-
-    return (<div className="nf-timeline-event" style={style}>event {this.props.value} <button ref="collapseButton">collapse</button>
-        <div className="nf-timeline-event-children">
-          {this.props.children}
-        </div>
-      </div>);
+    return (<div>{this.props.children}</div>);
   }
 }

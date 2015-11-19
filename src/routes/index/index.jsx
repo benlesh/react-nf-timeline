@@ -11,7 +11,7 @@ export default
 class IndexPage extends Component {
   getEvents() {
     const events = [];
-    for (let i = 0; i < 1500; i++) {
+    for (let i = 0; i < 10000; i++) {
       events.push(<NfTimelineEvent id={i}>
           <NfTimelineEvent id={i + '-' + 0}>
             <NfTimelineEvent id={i + '-' + 0 + '-' + 0}/>

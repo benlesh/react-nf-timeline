@@ -16,12 +16,10 @@ export default class NfTimeline extends Component {
   constructor(props) {
     super(props);
     const treeState = this.getTreeState(props.children);
-    const events = this.getEvents(treeState, 0, props.height, props.eventHeight, 150);
 
     this.state = {
       viewportOffset: 0,
       treeState,
-      events,
       leftWidth: 150
     };
   }
@@ -29,12 +27,8 @@ export default class NfTimeline extends Component {
   componentWillReceiveProps(nextProps) {
     if (nextProps.children !== this.props.children) {
       const treeState = this.getTreeState(nextProps.children);
-      const events = this.getEvents(treeState, this.state.viewportOffset, nextProps.height,
-        nextProps.eventHeight, this.state.leftWidth);
-
       this.setState({
-        treeState,
-        events
+        treeState
       });
     }
   }
@@ -96,16 +90,15 @@ export default class NfTimeline extends Component {
 
       collapse(node);
 
-      const events = this.getEvents(treeState, state.viewportOffset,
-        props.height, props.eventHeight, state.leftWidth);
       this.setState({
-        treeState,
-        events
+        treeState
       });
     }
   }
 
-  getEvents(treeState, viewportOffset, height, eventHeight, leftWidth) {
+  getEvents() {
+    const { treeState, viewportOffset, leftWidth } = this.state;
+    const { height, eventHeight } = this.props;
     const displayCount = this.getDisplayCount(height, eventHeight);
     const startIndex = this.getStartIndex(viewportOffset, eventHeight);
     const len = treeState.length;
@@ -159,10 +152,8 @@ export default class NfTimeline extends Component {
   viewportScrolled(e) {
     const viewportOffset = e.target.scrollTop;
     const { state: { treeState, leftWidth }, props: { height, eventHeight } } = this;
-    const events = this.getEvents(treeState, viewportOffset, height, eventHeight, leftWidth);
     this.setState({
-      viewportOffset,
-      events
+      viewportOffset
     });
   }
 
@@ -171,8 +162,7 @@ export default class NfTimeline extends Component {
       e.preventDefault();
       const leftWidth = (e.clientX - this.refs.timeline.offsetLeft);
       this.setState({
-        leftWidth,
-        events: this.getEvents(this.state.treeState, 0, this.props.height, this.props.eventHeight, leftWidth)
+        leftWidth
       });
     }
   }
@@ -204,8 +194,9 @@ export default class NfTimeline extends Component {
   }
 
   render() {
-    const { treeState, events } = this.state;
+    const { treeState } = this.state;
     const total = treeState.length;
+    const events = this.getEvents();
     const contentStyle = this.getContentStyle(total);
     const viewportStyle = this.getViewportStyle();
     const offsetStyle = this.getOffsetStyle();

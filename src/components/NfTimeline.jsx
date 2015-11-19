@@ -112,7 +112,9 @@ export default class NfTimeline extends Component {
         offset += 1;
         continue;
       }
-      if (startIndex + offset <= i && i <= endIndex + offset) {
+      const start = Math.max(0, (startIndex + offset - 4));
+      const end = Math.min(len - 1, (endIndex + offset + 4));
+      if (start <= i && i <= end) {
         events.push((<NfTimelineRenderedEvent
             key={key++}
             id={node.id}
@@ -143,7 +145,7 @@ export default class NfTimeline extends Component {
     const eventHeight = this.props.eventHeight;
     const viewportOffset = this.state.viewportOffset;
     const startIndex = this.getStartIndex(viewportOffset, eventHeight);
-    const offset = startIndex * eventHeight;
+    const offset = (startIndex * eventHeight);
     return {
       transform: `translate3d(0, ${offset}px, 0)`
     };

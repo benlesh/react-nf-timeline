@@ -50,6 +50,8 @@ export default class NfTimeline extends Component {
         let child = arr[i];
         let isCollapsed = child.props.collapse;
         let id = child.props.id;
+        let start = child.props.start;
+        let end = child.props.end;
         let isParentCollapsed = Boolean(parent && (parent.isCollapsed || parent.isParentCollapsed));
         let node = createNode(isCollapsed, id, isParentCollapsed);
 
@@ -119,6 +121,7 @@ export default class NfTimeline extends Component {
             key={key++}
             id={node.id}
             width={leftWidth}
+            height={eventHeight}
             isCollapsed={node.isCollapsed}
             isParentCollapsed={node.isParentCollapsed}
             onToggleCollapse={toggleCollapse}/>));

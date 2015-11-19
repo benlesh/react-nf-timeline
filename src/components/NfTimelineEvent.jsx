@@ -7,7 +7,10 @@ export default class NfTimelineEvent extends Component {
     level: PropTypes.number,
     viewportOffset: PropTypes.number,
     eventHeight: PropTypes.number,
-    value: PropTypes.string
+    value: PropTypes.any,
+    start: PropTypes.number.isRequired,
+    end: PropTypes.number.isRequired,
+    id: PropTypes.string
   }
 
   static defaultProps = {

@@ -11,15 +11,19 @@ export default
 class IndexPage extends Component {
   getEvents() {
     const events = [];
-    for (let i = 0; i < 10000; i++) {
-      events.push(<NfTimelineEvent id={i}>
-          <NfTimelineEvent id={i + '-' + 0}>
-            <NfTimelineEvent id={i + '-' + 0 + '-' + 0}/>
-            <NfTimelineEvent id={i + '-' + 0 + '-' + 1}/>
-            <NfTimelineEvent id={i + '-' + 0 + '-' + 2}/>
+    const testClick = () => {
+      window.alert('weeee!');
+    };
+
+    for (let i = 0; i < 1500; i++) {
+      events.push(<NfTimelineEvent id={i} start={100} end={1000}>
+          <NfTimelineEvent id={i + '-' + 0} start={200} end={750}>
+            <NfTimelineEvent id={i + '-' + 0 + '-' + 0} start={250} end={450}/>
+            <NfTimelineEvent id={i + '-' + 0 + '-' + 1} start={300} end={700}/>
+            <NfTimelineEvent id={i + '-' + 0 + '-' + 2} start={620} end={750}/>
           </NfTimelineEvent>
-          <NfTimelineEvent id={i + '-' + 1}/>
-          <NfTimelineEvent id={i + '-' + 2}/>
+          <NfTimelineEvent id={i + '-' + 1} start={500} end={900}/>
+          <NfTimelineEvent id={i + '-' + 2} start={700} end={1000} onClick={testClick}/>
         </NfTimelineEvent>);
     }
 
@@ -28,7 +32,7 @@ class IndexPage extends Component {
 
   render() {
     return (
-      <NfTimeline height={800}>
+      <NfTimeline height={800} width={800} start={0} end={1200}>
         {this.getEvents()}
       </NfTimeline>
     );

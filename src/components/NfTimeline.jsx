@@ -1,34 +1,43 @@
 import React, { Component, PropTypes } from 'react';
 import NfTimelineRenderedEvent from './NfTimelineRenderedEvent';
+import linearScale from '../util/linearScale';
 
 export default class NfTimeline extends Component {
   static propTypes = {
     eventHeight: PropTypes.number,
+    width: PropTypes.number.isRequired,
     height: PropTypes.number.isRequired,
-    data: PropTypes.array.isRequired
+    data: PropTypes.array.isRequired,
+    start: PropTypes.number,
+    end: PropTypes.number
   }
 
   static defaultProps = {
     height: 100,
+    width: 500,
     eventHeight: 20
   }
 
   constructor(props) {
     super(props);
-    const treeState = this.getTreeState(props.children);
+    const { hi, lo, treeState } = this.getTreeState(props.children);
 
     this.state = {
       viewportOffset: 0,
       treeState,
+      hi,
+      lo,
       leftWidth: 150
     };
   }
 
   componentWillReceiveProps(nextProps) {
     if (nextProps.children !== this.props.children) {
-      const treeState = this.getTreeState(nextProps.children);
+      const { hi, lo, treeState } = this.getTreeState(nextProps.children);
       this.setState({
-        treeState
+        treeState,
+        hi,
+        lo
       });
     }
   }
@@ -43,17 +52,39 @@ export default class NfTimeline extends Component {
 
 
   getTreeState(children) {
+    const _start = this.props.start;
+    const _end = this.props.end;
+    let lo = _start || null;
+    let hi = _end || null;
+
     const crawl = function crawl(children, treeState, parent) {
       const arr = React.Children.toArray(children);
       const len = arr.length;
+
       for (let i = 0; i < len; i++) {
         let child = arr[i];
-        let isCollapsed = child.props.collapse;
-        let id = child.props.id;
-        let start = child.props.start;
-        let end = child.props.end;
-        let isParentCollapsed = Boolean(parent && (parent.isCollapsed || parent.isParentCollapsed));
-        let node = createNode(isCollapsed, id, isParentCollapsed);
+        let { collapse, id, start, end, value, text, onClick } = child.props;
+
+        if (_start === null) {
+          lo = Math.min(lo, start);
+        }
+
+        if (_end === null) {
+          hi = Math.max(hi, end);
+        }
+
+        let isParentCollapsed = parent && (parent.isCollapsed || parent.isParentCollapsed);
+        let node = {
+          isCollapsed: collapse,
+          id,
+          start,
+          end,
+          value,
+          text,
+          isParentCollapsed,
+          children: [],
+          onClick
+        };
 
         treeState.push(node);
 
@@ -69,7 +100,7 @@ export default class NfTimeline extends Component {
 
     crawl(children, treeState, null);
 
-    return treeState;
+    return { hi, lo, treeState };
   }
 
   toggleCollapse(id) {
@@ -99,8 +130,8 @@ export default class NfTimeline extends Component {
   }
 
   getEvents() {
-    const { treeState, viewportOffset, leftWidth } = this.state;
-    const { height, eventHeight } = this.props;
+    const { hi, lo, treeState, viewportOffset, leftWidth } = this.state;
+    const { width, height, eventHeight, start, end } = this.props;
     const displayCount = this.getDisplayCount(height, eventHeight);
     const startIndex = this.getStartIndex(viewportOffset, eventHeight);
     const len = treeState.length;
@@ -108,6 +139,9 @@ export default class NfTimeline extends Component {
     const events = [];
     const toggleCollapse = ::this.toggleCollapse;
     let key = 0;
+    const domain = [start || lo, end || hi];
+    const range = [0, width];
+    const scale = linearScale(domain, range);
     for (let i = 0, offset = 0; i < len; i++) {
       let node = treeState[i];
       if (node.isParentCollapsed) {
@@ -120,11 +154,16 @@ export default class NfTimeline extends Component {
         events.push((<NfTimelineRenderedEvent
             key={key++}
             id={node.id}
-            width={leftWidth}
+            leftWidth={leftWidth}
             height={eventHeight}
             isCollapsed={node.isCollapsed}
             isParentCollapsed={node.isParentCollapsed}
-            onToggleCollapse={toggleCollapse}/>));
+            onToggleCollapse={toggleCollapse}
+            start={node.start}
+            end={node.end}
+            value={node.value}
+            onClick={node.onClick}
+            scale={scale} />));
       }
     }
 
@@ -219,13 +258,4 @@ export default class NfTimeline extends Component {
         onMouseDown={::this.startLeftResize} onMouseUp={::this.stopLeftResize}></div>
     </div>);
   }
-}
-
-function createNode(isCollapsed, id, isParentCollapsed, children = []) {
-  return {
-    isCollapsed,
-    children,
-    id,
-    isParentCollapsed
-  };
 }

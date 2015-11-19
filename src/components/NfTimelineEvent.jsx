@@ -10,7 +10,9 @@ export default class NfTimelineEvent extends Component {
     value: PropTypes.any,
     start: PropTypes.number.isRequired,
     end: PropTypes.number.isRequired,
-    id: PropTypes.string
+    id: PropTypes.string,
+    style: PropTypes.object,
+    onClick: PropTypes.func
   }
 
   static defaultProps = {

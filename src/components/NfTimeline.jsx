@@ -16,19 +16,39 @@ export default class NfTimeline extends Component {
   constructor(props) {
     super(props);
     const treeState = this.getTreeState(props.children);
-    const events = this.getEvents(treeState, 0, props.height, props.eventHeight);
+    const events = this.getEvents(treeState, 0, props.height, props.eventHeight, 150);
 
     this.state = {
       viewportOffset: 0,
       treeState,
-      events
+      events,
+      leftWidth: 150
     };
+  }
+
+  componentDidMount() {
+    this.timelineMouseMove = (e) => {
+      if (this.state.resizingLeft) {
+        e.preventDefault();
+        const leftWidth = (e.clientX - this.refs.timeline.offsetLeft);
+        this.setState({
+          leftWidth,
+          events: this.getEvents(this.state.treeState, 0, this.props.height, this.props.eventHeight, leftWidth)
+        });
+      }
+    };
+    this.refs.timeline.addEventListener('mousemove', this.timelineMouseMove);
+  }
+
+  componentWillUnmount() {
+    this.refs.timeline.removeEventListener('mousemove', this.timelineMouseMove);
   }
 
   componentWillReceiveProps(nextProps) {
     if (nextProps.children !== this.props.children) {
       const treeState = this.getTreeState(nextProps.children);
-      const events = this.getEvents(treeState, this.state.viewportOffset, nextProps.height, nextProps.eventHeight);
+      const events = this.getEvents(treeState, this.state.viewportOffset, nextProps.height,
+        nextProps.eventHeight, this.state.leftWidth);
 
       this.setState({
         treeState,
@@ -76,11 +96,13 @@ export default class NfTimeline extends Component {
   }
 
   toggleCollapse(id) {
-    const treeState = this.state.treeState;
+    const state = this.state;
+    const treeState = state.treeState;
     const index = treeState.findIndex(x => x.id === id);
 
     if (index !== -1) {
       const node = treeState[index];
+      const props = this.props;
 
       node.isCollapsed = !node.isCollapsed;
 
@@ -93,7 +115,8 @@ export default class NfTimeline extends Component {
 
       collapse(node);
 
-      const events = this.getEvents(treeState, this.state.viewportOffset, this.props.height, this.props.eventHeight);
+      const events = this.getEvents(treeState, state.viewportOffset,
+        props.height, props.eventHeight, state.leftWidth);
       this.setState({
         treeState,
         events
@@ -101,14 +124,14 @@ export default class NfTimeline extends Component {
     }
   }
 
-  getEvents(treeState, viewportOffset, height, eventHeight) {
+  getEvents(treeState, viewportOffset, height, eventHeight, leftWidth) {
     const displayCount = this.getDisplayCount(height, eventHeight);
     const startIndex = this.getStartIndex(viewportOffset, eventHeight);
     const len = treeState.length;
     const endIndex = startIndex + displayCount;
     const events = [];
     const toggleCollapse = ::this.toggleCollapse;
-
+    let key = 0;
     for (let i = 0, offset = 0; i < len; i++) {
       let node = treeState[i];
       if (node.isParentCollapsed) {
@@ -116,8 +139,13 @@ export default class NfTimeline extends Component {
         continue;
       }
       if (startIndex + offset <= i && i <= endIndex + offset) {
-        events.push((<NfTimelineRenderedEvent id={node.id} isCollapsed={node.isCollapsed}
-            isParentCollapsed={node.isParentCollapsed} onToggleCollapse={toggleCollapse}/>));
+        events.push((<NfTimelineRenderedEvent
+            key={key++}
+            id={node.id}
+            width={leftWidth}
+            isCollapsed={node.isCollapsed}
+            isParentCollapsed={node.isParentCollapsed}
+            onToggleCollapse={toggleCollapse}/>));
       }
     }
 
@@ -157,14 +185,41 @@ export default class NfTimeline extends Component {
     });
   }
 
+  getLeftSizeHandleStyle() {
+    return {
+      width: '20px',
+      height: this.props.height + 'px',
+      marginLeft: '-10px',
+      position: 'absolute',
+      top: 0,
+      left: this.state.leftWidth + 'px',
+      background: 'transparent',
+      cursor: this.state.resizingLeft ? 'ew-resize' : 'col-resize'
+    };
+  }
+
+  startLeftResize(e) {
+    e.preventDefault();
+    this.setState({
+      resizingLeft: true
+    });
+  }
+
+  stopLeftResize(e) {
+    this.setState({
+      resizingLeft: false
+    });
+  }
+
   render() {
     const { treeState, events } = this.state;
     const total = treeState.length;
     const contentStyle = this.getContentStyle(total);
     const viewportStyle = this.getViewportStyle();
     const offsetStyle = this.getOffsetStyle();
+    const leftSizeHandleStyle = this.getLeftSizeHandleStyle();
 
-    return (<div className="nf-timeline">
+    return (<div ref="timeline" className="nf-timeline">
       <div onScroll={::this.viewportScrolled} className="nf-timeline-viewport" style={viewportStyle}>
         <div className="nf-timeline-content" style={contentStyle}>
           <div className="nf-timeline-inner-offset" style={offsetStyle}>
@@ -172,6 +227,8 @@ export default class NfTimeline extends Component {
           </div>
         </div>
       </div>
+      <div className="nf-timeline-left-size-handle" style={leftSizeHandleStyle}
+        onMouseDown={::this.startLeftResize} onMouseUp={::this.stopLeftResize}></div>
     </div>);
   }
 }

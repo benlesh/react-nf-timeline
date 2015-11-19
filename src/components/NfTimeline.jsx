@@ -26,24 +26,6 @@ export default class NfTimeline extends Component {
     };
   }
 
-  componentDidMount() {
-    this.timelineMouseMove = (e) => {
-      if (this.state.resizingLeft) {
-        e.preventDefault();
-        const leftWidth = (e.clientX - this.refs.timeline.offsetLeft);
-        this.setState({
-          leftWidth,
-          events: this.getEvents(this.state.treeState, 0, this.props.height, this.props.eventHeight, leftWidth)
-        });
-      }
-    };
-    this.refs.timeline.addEventListener('mousemove', this.timelineMouseMove);
-  }
-
-  componentWillUnmount() {
-    this.refs.timeline.removeEventListener('mousemove', this.timelineMouseMove);
-  }
-
   componentWillReceiveProps(nextProps) {
     if (nextProps.children !== this.props.children) {
       const treeState = this.getTreeState(nextProps.children);
@@ -56,7 +38,6 @@ export default class NfTimeline extends Component {
       });
     }
   }
-
 
   getStartIndex(viewportOffset, eventHeight) {
     return Math.max(Math.floor(viewportOffset / eventHeight) - 1, 0);
@@ -177,12 +158,23 @@ export default class NfTimeline extends Component {
 
   viewportScrolled(e) {
     const viewportOffset = e.target.scrollTop;
-    const { state: { treeState }, props: { height, eventHeight } } = this;
-    const events = this.getEvents(treeState, viewportOffset, height, eventHeight);
+    const { state: { treeState, leftWidth }, props: { height, eventHeight } } = this;
+    const events = this.getEvents(treeState, viewportOffset, height, eventHeight, leftWidth);
     this.setState({
       viewportOffset,
       events
     });
+  }
+
+  onTimelineMouseMove(e) {
+    if (this.state.resizingLeft) {
+      e.preventDefault();
+      const leftWidth = (e.clientX - this.refs.timeline.offsetLeft);
+      this.setState({
+        leftWidth,
+        events: this.getEvents(this.state.treeState, 0, this.props.height, this.props.eventHeight, leftWidth)
+      });
+    }
   }
 
   getLeftSizeHandleStyle() {
@@ -219,7 +211,7 @@ export default class NfTimeline extends Component {
     const offsetStyle = this.getOffsetStyle();
     const leftSizeHandleStyle = this.getLeftSizeHandleStyle();
 
-    return (<div ref="timeline" className="nf-timeline">
+    return (<div onMouseMove={::this.onTimelineMouseMove} ref="timeline" className="nf-timeline">
       <div onScroll={::this.viewportScrolled} className="nf-timeline-viewport" style={viewportStyle}>
         <div className="nf-timeline-content" style={contentStyle}>
           <div className="nf-timeline-inner-offset" style={offsetStyle}>

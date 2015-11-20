@@ -10,13 +10,15 @@ export default class NfTimeline extends Component {
     height: PropTypes.number.isRequired,
     data: PropTypes.array.isRequired,
     start: PropTypes.number,
-    end: PropTypes.number
+    end: PropTypes.number,
+    tickFormat: PropTypes.func
   }
 
   static defaultProps = {
     height: 100,
     width: 500,
-    eventHeight: 20
+    eventHeight: 20,
+    tickFormat: (tick) => tick + 'ms'
   }
 
   constructor(props) {
@@ -252,6 +254,7 @@ export default class NfTimeline extends Component {
 
   render() {
     const { treeState, leftWidth } = this.state;
+    const tickFormat = this.props.tickFormat;
     const total = treeState.length;
     const events = this.getEvents();
     const contentStyle = this.getContentStyle(total);
@@ -283,7 +286,7 @@ export default class NfTimeline extends Component {
         left: `${left}px`
       }, tickStyle);
       return (<div style={style}>
-        <span className="nf-timeline-tick-label">{tick}</span>
+        <span className="nf-timeline-tick-label">{tickFormat(tick)}</span>
       </div>);
     });
 

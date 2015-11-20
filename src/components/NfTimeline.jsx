@@ -1,6 +1,7 @@
 import React, { Component, PropTypes } from 'react';
 import NfTimelineRenderedEvent from './NfTimelineRenderedEvent';
 import linearScale from '../util/linearScale';
+import mixin from '../util/mixin';
 
 export default class NfTimeline extends Component {
   static propTypes = {
@@ -129,6 +130,14 @@ export default class NfTimeline extends Component {
     }
   }
 
+  getScale() {
+    const { lo, hi } = this.state;
+    const { start, end, width } = this.props;
+    const domain = [start || lo, end || hi];
+    const range = [0, width];
+    return linearScale(domain, range);
+  }
+
   getEvents() {
     const { hi, lo, treeState, viewportOffset, leftWidth } = this.state;
     const { width, height, eventHeight, start, end } = this.props;
@@ -139,9 +148,8 @@ export default class NfTimeline extends Component {
     const events = [];
     const toggleCollapse = ::this.toggleCollapse;
     let key = 0;
-    const domain = [start || lo, end || hi];
-    const range = [0, width];
-    const scale = linearScale(domain, range);
+    const scale = this.getScale();
+
     for (let i = 0, offset = 0; i < len; i++) {
       let node = treeState[i];
       if (node.isParentCollapsed) {
@@ -238,18 +246,54 @@ export default class NfTimeline extends Component {
   }
 
   render() {
-    const { treeState } = this.state;
+    const { treeState, leftWidth } = this.state;
     const total = treeState.length;
     const events = this.getEvents();
     const contentStyle = this.getContentStyle(total);
     const viewportStyle = this.getViewportStyle();
     const offsetStyle = this.getOffsetStyle();
     const leftSizeHandleStyle = this.getLeftSizeHandleStyle();
+    const tickStyle = {
+      position: 'absolute',
+      top: 0,
+      bottom: 0,
+      borderRight: '1px solid black',
+      width: 0
+    };
+
+    const scale = this.getScale();
+
+    const ticks = scale.ticks(8, tick => {
+      const left = scale(tick) + leftWidth;
+      let style = mixin({
+        left: `${left}px`
+      }, tickStyle);
+      return <div style={style}/>;
+    });
+
+
+    const headerTicks = scale.ticks(8, tick => {
+      const left = scale(tick) + leftWidth;
+      let style = mixin({
+        left: `${left}px`
+      }, tickStyle);
+      return (<div style={style}>
+        <span className="nf-timeline-tick-label">{tick}</span>
+      </div>);
+    });
+
+    const headerStyle = {
+      height: '22px'
+    };
 
     return (<div onMouseMove={::this.onTimelineMouseMove} ref="timeline" className="nf-timeline">
+      <div className="nf-timeline-header" style={headerStyle}>{headerTicks}</div>
       <div onScroll={::this.viewportScrolled} className="nf-timeline-viewport" style={viewportStyle}>
         <div className="nf-timeline-content" style={contentStyle}>
           <div className="nf-timeline-inner-offset" style={offsetStyle}>
+            <div className="nf-timeline-ticks">
+              {ticks}
+            </div>
             {events}
           </div>
         </div>

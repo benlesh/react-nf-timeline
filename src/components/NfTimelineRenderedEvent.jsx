@@ -1,4 +1,5 @@
 import React, { Component, PropTypes } from 'react';
+import mixin from '../util/mixin';
 
 export default class NfTimelineRenderedEvent extends Component {
   static propTypes = {
@@ -87,13 +88,4 @@ export default class NfTimelineRenderedEvent extends Component {
       </div>
     </div>);
   }
-}
-
-function mixin(a, b) {
-  for (let key in b) {
-    if (b.hasOwnProperty(key)) {
-      a[key] = b[key];
-    }
-  }
-  return a;
 }

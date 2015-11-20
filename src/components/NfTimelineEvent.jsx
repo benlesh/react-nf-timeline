@@ -11,7 +11,7 @@ export default class NfTimelineEvent extends Component {
     start: PropTypes.number.isRequired,
     end: PropTypes.number.isRequired,
     id: PropTypes.string,
-    style: PropTypes.object,
+    markerStyle: PropTypes.object,
     onClick: PropTypes.func
   }
 

@@ -58,13 +58,13 @@ export default class NfTimeline extends Component {
     let lo = _start || null;
     let hi = _end || null;
 
-    const crawl = function crawl(children, treeState, parent) {
+    const crawl = function crawl(children, treeState, parent, level) {
       const arr = React.Children.toArray(children);
       const len = arr.length;
 
       for (let i = 0; i < len; i++) {
         let child = arr[i];
-        let { collapse, id, start, end, value, text, onClick } = child.props;
+        let { collapse, id, start, end, value, text, onClick, markerStyle } = child.props;
 
         if (_start === null) {
           lo = Math.min(lo, start);
@@ -84,7 +84,9 @@ export default class NfTimeline extends Component {
           text,
           isParentCollapsed,
           children: [],
-          onClick
+          level,
+          onClick,
+          markerStyle
         };
 
         treeState.push(node);
@@ -93,13 +95,13 @@ export default class NfTimeline extends Component {
           parent.children.push(node);
         }
 
-        crawl(child.props.children, treeState, node);
+        crawl(child.props.children, treeState, node, level + 1);
       }
     };
 
     const treeState = [];
 
-    crawl(children, treeState, null);
+    crawl(children, treeState, null, 0);
 
     return { hi, lo, treeState };
   }
@@ -172,7 +174,9 @@ export default class NfTimeline extends Component {
             value={node.value}
             onClick={node.onClick}
             hasChildren={node.children.length > 0}
-            scale={scale} />));
+            level={node.level}
+            scale={scale}
+            markerStyle={node.markerStyle} />));
       }
     }
 

@@ -171,6 +171,7 @@ export default class NfTimeline extends Component {
             end={node.end}
             value={node.value}
             onClick={node.onClick}
+            hasChildren={node.children.length > 0}
             scale={scale} />));
       }
     }

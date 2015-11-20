@@ -15,14 +15,16 @@ export default class NfTimelineRenderedEvent extends Component {
     end: PropTypes.number,
     scale: PropTypes.func,
     style: PropTypes.object,
-    onClick: PropTypes.func
+    onClick: PropTypes.func,
+    hasChildren: PropTypes.boolean
   };
 
   static defaultProps = {
     isCollapsed: false,
     isParentCollapsed: false,
     leftWidth: 150,
-    scale: (x) => x
+    scale: (x) => x,
+    hasChildren: false
   };
 
   toggleCollapse() {
@@ -41,7 +43,7 @@ export default class NfTimelineRenderedEvent extends Component {
 
   render() {
     const { id, onToggleCollapse, isCollapsed, isParentCollapsed,
-      leftWidth, height, scale, end, start, onClick, style } = this.props;
+      leftWidth, height, scale, end, start, onClick, style, hasChildren } = this.props;
 
     const toggleCollapse = ::this.toggleCollapse;
     const collapseButton = isCollapsed ? '▸' : '▾';
@@ -51,8 +53,10 @@ export default class NfTimelineRenderedEvent extends Component {
     };
 
     const leftSideStyle = {
+      boxSizing: 'content-box',
       borderRight: '1px solid black',
-      width: `${leftWidth}px`
+      width: `${leftWidth - (hasChildren ? 0 : 25)}px`,
+      paddingLeft: `${hasChildren ? 0 : 25}px`
     };
 
     const rightSideStyle = {
@@ -76,10 +80,12 @@ export default class NfTimelineRenderedEvent extends Component {
 
     const handleClick = ::this.handleClick;
 
+    const button = this.props.hasChildren ? (<button className="nf-timeline-collapse-button" onClick={toggleCollapse}>{collapseButton}</button>) : null;
+
     return (<div className="nf-timeline-event">
       <div className="nf-timeline-event-content" style={contentStyle}>
         <div className="nf-timeline-event-left" style={leftSideStyle}>
-          <button className="nf-timeline-collapse-button" onClick={toggleCollapse}>{collapseButton}</button>
+          {button}
           <span className="nf-timeline-event-name">{id}</span>
         </div>
         <div className="nf-timeline-event-right" style={rightSideStyle}>

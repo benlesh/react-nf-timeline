@@ -59,6 +59,7 @@ export default class NfTimeline extends Component {
     const _end = this.props.end;
     let lo = _start || null;
     let hi = _end || null;
+    let counter = 0;
 
     const crawl = function crawl(children, treeState, parent, level) {
       const arr = React.Children.toArray(children);
@@ -86,6 +87,7 @@ export default class NfTimeline extends Component {
           text,
           isParentCollapsed,
           children: [],
+          parent,
           level,
           onClick,
           markerStyle
@@ -97,7 +99,11 @@ export default class NfTimeline extends Component {
           parent.children.push(node);
         }
 
+        const startCounter = counter;
         crawl(child.props.children, treeState, node, level + 1);
+        node.descendantCount = counter - startCounter;
+        node.visibleChildren = node.isParentCollapsed || node.isCollapsed ? 0 : node.descendantCount;
+        counter++;
       }
     };
 
@@ -128,6 +134,15 @@ export default class NfTimeline extends Component {
 
       collapse(node);
 
+      const updateVisibleChildren = (node, change) => {
+        node.visibleChildren = node.descendantCount + change;
+        if (node.parent) {
+          updateVisibleChildren(node.parent, change);
+        }
+      };
+
+      updateVisibleChildren(node, node.isCollapsed ? -node.descendantCount : 0);
+
       this.setState({
         treeState
       });
@@ -135,10 +150,11 @@ export default class NfTimeline extends Component {
   }
 
   getScale() {
-    const { lo, hi } = this.state;
+    const { lo, hi, leftWidth } = this.state;
     const { start, end, width } = this.props;
     const domain = [start || lo, end || hi];
-    const range = [0, width];
+    const range = [0, width - leftWidth];
+    console.log('domain', domain, 'range', range);
     return linearScale(domain, range);
   }
 
@@ -152,8 +168,9 @@ export default class NfTimeline extends Component {
     const events = [];
     const toggleCollapse = ::this.toggleCollapse;
     let key = 0;
-    const scale = this.getScale();
 
+    const scale = this.getScale();
+    console.log(scale(1));
     for (let i = 0, offset = 0; i < len; i++) {
       let node = treeState[i];
       if (node.isParentCollapsed) {
@@ -176,6 +193,7 @@ export default class NfTimeline extends Component {
             value={node.value}
             onClick={node.onClick}
             hasChildren={node.children.length > 0}
+            visibleChildren={node.visibleChildren}
             level={node.level}
             scale={scale}
             markerStyle={node.markerStyle} />));

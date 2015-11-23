@@ -17,6 +17,7 @@ export default class NfTimelineRenderedEvent extends Component {
     markerStyle: PropTypes.object,
     onClick: PropTypes.func,
     hasChildren: PropTypes.boolean,
+    visibleChildren: PropTypes.number,
     level: PropTypes.number
   };
 
@@ -26,7 +27,8 @@ export default class NfTimelineRenderedEvent extends Component {
     leftWidth: 150,
     scale: (x) => x,
     hasChildren: false,
-    level: 0
+    level: 0,
+    visibleChildren: 0
   };
 
   toggleCollapse() {
@@ -44,7 +46,7 @@ export default class NfTimelineRenderedEvent extends Component {
   }
 
   render() {
-    const { id, onToggleCollapse, isCollapsed, isParentCollapsed, level,
+    const { id, onToggleCollapse, isCollapsed, isParentCollapsed, level, visibleChildren,
       leftWidth, height, scale, end, start, onClick, markerStyle, hasChildren } = this.props;
 
     const toggleCollapse = ::this.toggleCollapse;
@@ -71,8 +73,8 @@ export default class NfTimelineRenderedEvent extends Component {
 
     const finalMarkerStyle = mixin({
       position: 'absolute',
-      width: `${leftWidth + scale(end - start)}px`,
-      left: `${leftWidth + scale(start)}px`,
+      width: `${scale(end - start)}px`,
+      left: `${scale(start)}px`,
       height: `${markerHeight}px`,
       marginTop: '2px',
       marginBottom: '2px',
@@ -102,6 +104,22 @@ export default class NfTimelineRenderedEvent extends Component {
 
     const button = this.props.hasChildren ? (<button className="nf-timeline-collapse-button" onClick={toggleCollapse}>{collapseButton}</button>) : null;
 
+    const groupingStyle = {
+      position: 'absolute',
+      display: 'inline-block',
+      top: '-1px',
+      left: '-20px',
+      borderLeft: '1px solid black',
+      borderTop: '1px solid black',
+      borderBottom: '1px solid black',
+      width: '16px',
+      height: `${((1 + visibleChildren) * height) - 6}px`
+    };
+
+    const grouping = hasChildren ? (<div className="nf-timeline-event-grouping" style={groupingStyle}>
+      <button className="nf-timeline-grouping-collapse-button" onClick={toggleCollapse}>{collapseButton}</button>
+    </div>) : null;
+
     return (<div className="nf-timeline-event">
       <div className="nf-timeline-event-content" style={contentStyle}>
         <div className="nf-timeline-event-left" style={leftSideStyle}>
@@ -109,7 +127,9 @@ export default class NfTimelineRenderedEvent extends Component {
           <div className="nf-timeline-event-key" style={keyStyle}></div><span className="nf-timeline-event-name">{id}</span>
         </div>
         <div className="nf-timeline-event-right" style={rightSideStyle}>
-          <div className="nf-timeline-event-marker" style={finalMarkerStyle} onClick={handleClick}/>
+          <div className="nf-timeline-event-marker" style={finalMarkerStyle} onClick={handleClick}>
+            {grouping}
+          </div>
         </div>
       </div>
     </div>);

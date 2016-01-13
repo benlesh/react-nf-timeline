@@ -6,19 +6,19 @@ import mixin from '../util/mixin';
 export default class NfTimeline extends Component {
   static propTypes = {
     eventHeight: PropTypes.number,
-    width: PropTypes.number.isRequired,
     height: PropTypes.number.isRequired,
     data: PropTypes.array.isRequired,
     start: PropTypes.number,
     end: PropTypes.number,
-    tickFormat: PropTypes.func
+    tickFormat: PropTypes.func,
+    resizeThrottle: PropTypes.number
   }
 
   static defaultProps = {
-    height: 100,
-    width: 500,
+    height: 800,
     eventHeight: 20,
-    tickFormat: (tick) => tick + 'ms'
+    tickFormat: (tick) => tick + 'ms',
+    resizeThrottle: 50
   }
 
   constructor(props) {
@@ -30,8 +30,42 @@ export default class NfTimeline extends Component {
       treeState,
       hi,
       lo,
-      leftWidth: 150
+      leftWidth: 150,
+      width: 800
     };
+  }
+
+  throttle(callback, limit) {
+    let wait = false;
+    return function () {
+      if (!wait) {
+        callback.call();
+        wait = true;
+        setTimeout(function () {
+          wait = false;
+        }, limit);
+      }
+    };
+  }
+
+  componentDidMount() {
+    let self = this;
+    window.addEventListener('resize', self.throttle(self.resizeHandler.bind(self), self.props.resizeThrottle));
+    self.resizeHandler();
+  }
+
+  componentWillUnmount() {
+    let self = this;
+    window.removeEventListener('resize', self.throttle(self.resizeHandler.bind(self), self.props.resizeThrottle));
+  }
+
+  resizeHandler() {
+    let width = this.refs.timeline.clientWidth;
+    if (this.state.width !== width) {
+      this.setState({
+        width: width,
+      });
+    }
   }
 
   componentWillReceiveProps(nextProps) {
@@ -150,8 +184,8 @@ export default class NfTimeline extends Component {
   }
 
   getScale() {
-    const { lo, hi, leftWidth } = this.state;
-    const { start, end, width } = this.props;
+    const { lo, hi, leftWidth, width } = this.state;
+    const { start, end } = this.props;
     const domain = [start || lo, end || hi];
     const range = [0, width - leftWidth];
     console.log('domain', domain, 'range', range);
@@ -160,7 +194,7 @@ export default class NfTimeline extends Component {
 
   getEvents() {
     const { hi, lo, treeState, viewportOffset, leftWidth } = this.state;
-    const { width, height, eventHeight, start, end } = this.props;
+    const { height, eventHeight, start, end } = this.props;
     const displayCount = this.getDisplayCount(height, eventHeight);
     const startIndex = this.getStartIndex(viewportOffset, eventHeight);
     const len = treeState.length;
@@ -206,6 +240,7 @@ export default class NfTimeline extends Component {
   getViewportStyle() {
     return {
       height: this.props.height + 'px',
+      width: this.state.width,
       overflowY: 'scroll'
     };
   }
@@ -325,7 +360,8 @@ export default class NfTimeline extends Component {
         </div>
       </div>
       <div className="nf-timeline-left-size-handle" style={leftSizeHandleStyle}
-        onMouseDown={::this.startLeftResize} onMouseUp={::this.stopLeftResize}></div>
+        onMouseDown={::this.startLeftResize} onMouseUp={::this.stopLeftResize}>
+      </div>
     </div>);
   }
 }

@@ -32,7 +32,7 @@ class IndexPage extends Component {
 
   render() {
     return (
-      <NfTimeline height={800} width={800} start={0} end={1200}>
+      <NfTimeline start={0} end={1200}>
         {this.getEvents()}
       </NfTimeline>
     );
